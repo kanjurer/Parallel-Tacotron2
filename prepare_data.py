@@ -2,12 +2,14 @@ import argparse
 
 import yaml
 
-from preprocessor import ljspeech
+from preprocessor import ljspeech, vctk
 
 
 def main(config):
     if "LJSpeech" in config["dataset"]:
         ljspeech.prepare_data(config)
+    if "VCTK" in config["dataset"]:
+        vctk.prepare_data(config)
 
 
 if __name__ == "__main__":

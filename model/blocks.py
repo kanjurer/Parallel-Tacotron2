@@ -2,7 +2,74 @@ import torch
 import torch.nn as nn
 import numpy as np
 from torch.nn import functional as F
-from fairseq.modules import LightweightConv
+# from fairseq.modules import LightweightConv
+
+
+class LightweightConv(nn.Module):
+    def __init__(
+            self,
+            num_channels,
+            kernel_size,
+            padding_l,
+            weight_softmax,
+            num_heads,
+            weight_dropout,
+            stride=1,
+            dilation=1,
+            bias=True,
+    ):
+        super(LightweightConv, self).__init__()
+
+        self.channels = num_channels
+        self.heads = num_heads
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding_l
+        self.dilation = dilation
+        self.dropout_p = weight_dropout
+        self.bias = bias
+        self.weight_softmax = weight_softmax
+
+        self.weights = nn.Parameter(torch.Tensor(self.heads, 1, self.kernel_size), requires_grad=True)
+
+        self.kernel_softmax = nn.Softmax(dim=-1)
+        self.dropout = nn.Dropout(self.dropout_p)
+
+        if self.bias:
+            self.bias_weights = nn.Parameter(torch.randn(self.heads))
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        nn.init.xavier_uniform_(self.weights)
+        if self.bias_weights is not None:
+            nn.init.constant_(self.bias_weights, 0.)
+
+    def forward(self, x):
+
+        x = x.permute(1, 2, 0)
+        # x.shape = [batchsize, channel, width]
+        batch_size, in_channel, width = x.shape
+
+        if self.weight_softmax:
+            weights = self.kernel_softmax(self.weights)
+        else:
+            weigths = self.weights
+
+        weigths = self.dropout(weights)
+
+        x = x.view(-1, self.heads, width)
+
+        if self.bias:
+            output = F.conv1d(x, weigths, stride=self.stride, padding=self.padding, dilation=self.dilation,
+                              groups=self.heads, bias=self.bias_weights)
+        else:
+            output = F.conv1d(x, weigths, stride=self.stride, padding=self.padding, dilation=self.dilation,
+                              groups=self.heads)
+
+        output = output.view(batch_size, -1, width).permute(2, 0, 1)
+
+        return output
 
 
 class SwishBlock(nn.Module):

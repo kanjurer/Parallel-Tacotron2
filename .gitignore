@@ -119,3 +119,6 @@ hifigan/*.pth.tar
 *.out
 fairseq/
 soft_dtw_cuda/
+
+# ide
+.idea

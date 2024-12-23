@@ -46,6 +46,8 @@ class Preprocessor:
         speakers = {}
         for i, speaker in enumerate(tqdm(os.listdir(self.in_dir))):
             speakers[speaker] = i
+            if "316" in speaker:
+                break
             for wav_name in tqdm(os.listdir(os.path.join(self.in_dir, speaker))):
                 if ".wav" not in wav_name:
                     continue
@@ -99,17 +101,17 @@ class Preprocessor:
         return out
 
     def process_utterance(self, speaker, basename):
-        wav_path = os.path.join(self.in_dir, speaker, "{}.wav".format(basename))
+        # wav_path = os.path.join(self.in_dir, speaker, "{}.wav".format(basename))
         text_path = os.path.join(self.in_dir, speaker, "{}.lab".format(basename))
 
         # Read and trim wav files
-        wav, _ = librosa.load(wav_path)
-        wav = wav.astype(np.float32)
+        # wav, _ = librosa.load(wav_path)
+        # wav = wav.astype(np.float32)
 
-        if len(wav) < self.skip_len:
-            return None
+        # if len(wav) < self.skip_len:
+        #     return None
 
-        wav = librosa.effects.trim(wav, top_db=self.trim_top_db, frame_length=self.filter_length, hop_length=self.hop_length)[0]
+        # wav = librosa.effects.trim(wav, top_db=self.trim_top_db, frame_length=self.filter_length, hop_length=self.hop_length)[0]
 
         # Compute mel-scale spectrogram
         mel_spectrogram, _ = Audio.tools.get_mel_from_wav(wav, self.STFT)
